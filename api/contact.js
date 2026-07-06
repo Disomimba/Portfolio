@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
@@ -7,14 +7,18 @@ export default async function handler(req, res) {
   // Grab the hidden key from Vercel's environment variables
   const ACCESS_KEY = process.env.WEB3FORMS_KEY;
 
-  // Combine the access key with the user's form data
+  if (!ACCESS_KEY) {
+    return res.status(500).json({ success: false, message: 'Missing WEB3FORMS_KEY environment variable.' });
+  }
+
+  // Combine the access key with the incoming form data
   const payload = {
     access_key: ACCESS_KEY,
     ...req.body
   };
 
   try {
-    // Send the data from your secure server to Web3Forms
+    // Send data securely to Web3Forms
     const response = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
       headers: {
@@ -29,9 +33,9 @@ export default async function handler(req, res) {
     if (response.ok) {
       return res.status(200).json({ success: true, result });
     } else {
-      return res.status(500).json({ success: false, result });
+      return res.status(response.status).json({ success: false, result });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error processing contact form.' });
   }
-}
+};
